@@ -9,7 +9,6 @@ from napari_boids import BoidViewer
 def test_example_q_widget(make_napari_viewer, capsys):
     # make viewer and add an image layer using our fixture
     viewer = make_napari_viewer()
-    viewer = Viewer()
     my_widget = BoidViewer(viewer)
     my_widget.play_click()
     my_widget.rdp1.value = .2
