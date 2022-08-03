@@ -37,9 +37,15 @@ class BoidFlock:
 
     def limit_speed(self):
         speed = np.linalg.norm(self.velocity, axis=1)
-        too_fast = self.velocity[self.speed_limit<speed]
-        too_fast = (too_fast.T/speed[self.speed_limit<speed] * self.speed_limit).T
-        self.velocity[self.speed_limit<speed] = too_fast
+        fast_mask = self.speed_limit<speed
+        too_fast = self.velocity[fast_mask]
+        too_fast = (too_fast.T/speed[fast_mask] * self.speed_limit).T
+        self.velocity[fast_mask] = too_fast
+
+        slow_mask = speed<self.speed_limit_low
+        too_slow = self.velocity[slow_mask]
+        too_slow = (too_slow.T/speed[slow_mask] * self.speed_limit_low).T
+        self.velocity[slow_mask] = too_slow
 
     def _move_boids(self):
         self.get_neighbours()
@@ -66,6 +72,17 @@ class BoidFlock:
         ax.scatter(*self.pos.T, marker='o')
         ax.set_xlim(0, self.arena_shape[0])
         ax.set_ylim(0, self.arena_shape[1])
+
+    def add_boid(self, pos):
+        self.nb_boids += 1
+        self.pos = np.vstack([self.pos, pos])
+        self.velocity = np.vstack([self.velocity, (np.random.random([1, 2])-.5)*self.speed_limit])
+
+    def remove_boid(self, pos):
+        self.nb_boids -= 1
+        old_id = np.where(self.pos==pos)[0][0]
+        self.pos = np.vstack((self.pos[:old_id], self.pos[old_id+1:]))
+        self.velocity = np.vstack((self.velocity[:old_id], self.velocity[old_id+1:]))
 
     def __init__(self, nb_boids, vision=5, init_positions=None,
                  arena_shape=(100, 100), init_shape=None, reflection=True,
@@ -100,5 +117,6 @@ class BoidFlock:
             self.pos = init_positions
 
         # self.velocity = np.zeros_like(self.pos)
+        self.speed_limit_low = .5
         self.velocity = (np.random.random(self.pos.shape)-.5)*self.speed_limit
         self.color = np.random.random((self.pos.shape[0]))

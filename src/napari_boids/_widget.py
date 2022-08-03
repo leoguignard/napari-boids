@@ -30,32 +30,42 @@ class BoidViewer(QWidget):
 
     @thread_worker
     def play_click_worker(self):
-        self.play.clicked.disconnect
-        if self.nb_workers == 0:
-            self.nb_workers += 1
-            self.continue_playing = True
-            while self.continue_playing:
-                time.sleep(.1)
-                self.flock.move_boids(5)
-                yield self.flock.pos
+        self.play.clicked.disconnect()
+        while True:
+            time.sleep(.1)
+            data = self.boids_layer.data
+            new_pos = set(tuple(k) for k in data).difference(tuple(k) for k in self.flock.pos)
+            for p in new_pos:
+                self.flock.add_boid(p)
+            removed_pos = new_pos = set(tuple(k) for k in self.flock.pos).difference(tuple(k) for k in data)
+            for p in removed_pos:
+                self.flock.remove_boid(p)
+            self.flock.move_boids(5)
+            yield self.flock.pos
+
+    def clear_boids(self):
+        del self.worker
+        self.play.clicked.connect(self.play_click)
+        self.create_flock()
+
+    def pause_boids(self):
+        self.play.clicked.connect(self.play_click)
 
     def play_click(self, event):
-        worker = self.play_click_worker()
-        worker.yielded.connect(self.update_layer)
-        worker.start()
+        self.worker = self.play_click_worker()
+        self.worker.yielded.connect(self.update_layer)
+        self.worker.finished.connect(self.clear_boids)
+        self.worker.paused.connect(self.pause_boids)
+        self.worker.start()
 
     def pause_click(self):
-        if self.nb_workers == 1:
-            self.nb_workers -= 1
-            self.play.clicked.connect(self.play_click)
-        self.continue_playing = False
+        self.worker.pause()
 
     def stop_click(self):
-        if self.nb_workers == 1:
-            self.nb_workers -= 1
-            self.play.clicked.connect(self.play_click)
-        self.continue_playing = False
-        self.create_flock()
+        if hasattr(self, 'worker'):
+            self.worker.quit()
+        else:
+            self.create_flock()
 
     def reset_all_values_click(self):
         self.rdp1.value=.1
@@ -86,9 +96,12 @@ class BoidViewer(QWidget):
         btn.label_changed = None
         return btn
 
-    def create_slider(self, name, value, min, max, change_connect=None):
+    def create_slider(self, name, value, min, max, change_connect=None, float=True):
         label = widgets.Label(value=name)
-        slider = widgets.FloatSlider(value=value, min=min, max=max)
+        if float:
+            slider = widgets.FloatSlider(value=value, min=min, max=max)
+        else:
+            slider = widgets.Slider(value=value, min=min, max=max)
         btn = widgets.PushButton(name='Reset')
         btn.changed.connect(partial(self.reset_value_click, value=value, slider=slider))
         s_container = widgets.Container(widgets=[slider, btn],
@@ -100,7 +113,6 @@ class BoidViewer(QWidget):
 
     def create_flock(self):
         arena_shape = (1000, 1000)
-        nb_boids = 100
         if not hasattr(self, 'center'):
             points = [[0             , 0             ],
                       [0             , arena_shape[1]],
@@ -110,7 +122,9 @@ class BoidViewer(QWidget):
             self.center = self.viewer.camera.center
             self.zoom = self.viewer.camera.zoom
             self.viewer.layers.remove(l)
-        self.flock = BoidFlock(nb_boids, vision=self.vision.value,
+        if hasattr(self, 'boids_layer') and not self.boids_layer is None:
+            self.viewer.layers.remove(self.boids_layer)
+        self.flock = BoidFlock(self.nb_birds.value, vision=self.vision.value,
                                arena_shape=arena_shape,
                                init_shape=((250, 750), (250, 750)),
                                rdp1=self.rdp1.value/100,
@@ -121,8 +135,6 @@ class BoidViewer(QWidget):
                                repulsion_range=self.repulsion.value,
                                margin=5)
 
-        if hasattr(self, 'boids_layer'):
-            self.viewer.layers.remove(self.boids_layer)
         properties = {'color': self.flock.color}
         self.boids_layer = self.viewer.add_points(self.flock.pos,
                                                   cache=False,
@@ -151,6 +163,10 @@ class BoidViewer(QWidget):
         control_w = widgets.Container(widgets=[self.play, pause, stop],
                                       labels=False, layout='horizontal')
 
+        self.nb_birds, nb_birds_w = self.create_slider('#birds', value=100, min=10, max=500,
+                                                        change_connect=self.stop_click,
+                                                        float=False)
+
         self.rdp1, rdp1_w = self.create_slider('Attraction', value=.1, min=0.01, max=1,
                                                change_connect=self.update_values)
         self.rdp2, rdp2_w = self.create_slider('Avoidance', value=1, min=0.1, max=10,
@@ -162,6 +178,7 @@ class BoidViewer(QWidget):
         self.repulsion, repulsion_w = self.create_slider('Avoidance radius', value=20, min=1, max=40,
                                                change_connect=self.update_values)
         w = widgets.Container(widgets=[control_w,
+                                       nb_birds_w,
                                        rdp1_w,
                                        rdp2_w,
                                        rdp3_w,
