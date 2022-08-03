@@ -30,7 +30,6 @@ class BoidViewer(QWidget):
 
     @thread_worker
     def play_click_worker(self):
-        self.play.clicked.disconnect()
         while True:
             time.sleep(.1)
             data = self.boids_layer.data
@@ -51,7 +50,8 @@ class BoidViewer(QWidget):
     def pause_boids(self):
         self.play.clicked.connect(self.play_click)
 
-    def play_click(self, event):
+    def play_click(self):
+        self.play.clicked.disconnect()
         self.worker = self.play_click_worker()
         self.worker.yielded.connect(self.update_layer)
         self.worker.finished.connect(self.clear_boids)
@@ -59,12 +59,16 @@ class BoidViewer(QWidget):
         self.worker.start()
 
     def pause_click(self):
-        self.worker.pause()
+        if hasattr(self, 'worker'):
+            self.worker.pause()
+        else:
+            self.play.clicked.connect(self.play_click)
 
     def stop_click(self):
         if hasattr(self, 'worker'):
             self.worker.quit()
         else:
+            self.play.clicked.connect(self.play_click)
             self.create_flock()
 
     def reset_all_values_click(self):
@@ -119,6 +123,7 @@ class BoidViewer(QWidget):
                       [arena_shape[0], arena_shape[1]],
                       [arena_shape[0], 0             ] ]
             l = self.viewer.add_points(points)
+            l.refresh()
             self.center = self.viewer.camera.center
             self.zoom = self.viewer.camera.zoom
             self.viewer.layers.remove(l)
