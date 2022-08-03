@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
 class BoidFlock:
@@ -66,12 +65,6 @@ class BoidFlock:
     def move_boids(self, nb_it=1):
         for i in range(nb_it):
             self._move_boids()
-
-    def plot_current(self):
-        fig, ax = plt.subplots(figsize=(8, 8))
-        ax.scatter(*self.pos.T, marker='o')
-        ax.set_xlim(0, self.arena_shape[0])
-        ax.set_ylim(0, self.arena_shape[1])
 
     def add_boid(self, pos):
         self.nb_boids += 1
