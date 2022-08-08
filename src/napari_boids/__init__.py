@@ -3,5 +3,4 @@ from ._widget import BoidViewer
 
 __all__ = (
     "BoidViewer",
-    "example_magic_widget",
 )
