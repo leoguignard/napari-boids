@@ -1,12 +1,12 @@
 # napari-boids
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-boids.svg?color=green)](https://github.com/leoguignard/napari-boids/raw/main/LICENSE)
+<!-- [![License BSD-3](https://img.shields.io/pypi/l/napari-boids.svg?color=green)](https://github.com/leoguignard/napari-boids/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-boids.svg?color=green)](https://pypi.org/project/napari-boids)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-boids.svg?color=green)](https://python.org)
 [![tests](https://github.com/leoguignard/napari-boids/workflows/tests/badge.svg)](https://github.com/leoguignard/napari-boids/actions)
 [![codecov](https://codecov.io/gh/leoguignard/napari-boids/branch/main/graph/badge.svg)](https://codecov.io/gh/leoguignard/napari-boids)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-boids)](https://napari-hub.org/plugins/napari-boids)
-
+ -->
 A plugin to look at boids
 
 ----------------------------------
@@ -20,6 +20,8 @@ https://github.com/napari/cookiecutter-napari-plugin#getting-started
 and review the napari docs for plugin developers:
 https://napari.org/plugins/index.html
 -->
+
+![example image](img/Boids.gif)
 
 ## Installation
 
